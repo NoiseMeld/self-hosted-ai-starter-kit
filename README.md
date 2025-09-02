@@ -126,7 +126,7 @@ After completing the installation steps above, simply follow the steps below to 
 
 To open n8n at any time, visit <http://localhost:5678/> in your browser.
 
-With your n8n instance, you’ll have access to over 400 integrations and a
+With your n8n instance, you'll have access to over 400 integrations and a
 suite of basic and advanced AI nodes such as
 [AI Agent](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/),
 [Text classifier](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.text-classifier/),
@@ -136,9 +136,161 @@ language model and Qdrant as your vector store.
 
 > [!NOTE]
 > This starter kit is designed to help you get started with self-hosted AI
-> workflows. While it’s not fully optimized for production environments, it
+> workflows. While it's not fully optimized for production environments, it
 > combines robust components that work well together for proof-of-concept
 > projects. You can customize it to meet your specific needs
+
+## Managing the Docker Stack
+
+### Starting the Services
+
+#### Foreground Mode (Default)
+Running in foreground mode shows live logs and is great for development:
+
+```bash
+# For CPU setups
+docker compose --profile cpu up
+
+# For Nvidia GPU setups  
+docker compose --profile gpu-nvidia up
+
+# For AMD GPU setups
+docker compose --profile gpu-amd up
+
+# For Mac / Apple Silicon users
+docker compose up
+```
+
+**What you'll see:**
+- Live logs from all services in your terminal
+- Progress of model downloads and service initialization
+- The terminal will stay occupied showing ongoing activity
+- Use **Ctrl+C** to stop all services
+
+#### Background Mode (Detached)
+Running in background mode frees up your terminal:
+
+```bash
+# For CPU setups
+docker compose --profile cpu up -d
+
+# For Nvidia GPU setups
+docker compose --profile gpu-nvidia up -d
+
+# For AMD GPU setups  
+docker compose --profile gpu-amd up -d
+
+# For Mac / Apple Silicon users
+docker compose up -d
+```
+
+**Benefits of background mode:**
+- Terminal is immediately available for other commands
+- Services run in the background
+- Use `docker compose logs -f` to view logs when needed
+
+### Stopping the Services
+
+#### Stop Running Services
+```bash
+# Stop services (keeps containers and data)
+docker compose stop
+
+# Stop and remove containers (keeps volumes and images)
+docker compose down
+```
+
+#### Force Stop from Foreground Mode
+If running in foreground mode, use **Ctrl+C** to stop all services gracefully.
+
+### Viewing Logs and Status
+
+#### Check Service Status
+```bash
+# View running containers
+docker compose ps
+
+# View all containers (including stopped)
+docker compose ps -a
+```
+
+#### View Logs
+```bash
+# View all service logs
+docker compose logs
+
+# Follow logs in real-time
+docker compose logs -f
+
+# View logs for specific service
+docker compose logs -f n8n
+docker compose logs -f ollama-cpu
+docker compose logs -f postgres
+docker compose logs -f qdrant
+```
+
+#### Monitor Resource Usage
+```bash
+# View container resource usage
+docker stats
+```
+
+### Restarting Services
+
+#### Restart All Services
+```bash
+# Restart all services
+docker compose restart
+
+# Restart specific service
+docker compose restart n8n
+```
+
+#### Rebuild and Restart
+```bash
+# Pull latest images and restart
+docker compose pull
+docker compose up -d --force-recreate
+```
+
+### Common Scenarios
+
+#### Development Workflow
+```bash
+# Start in foreground to see logs during development
+docker compose --profile cpu up
+
+# When done, stop with Ctrl+C
+# Or open new terminal and run:
+docker compose stop
+```
+
+#### Long-running Setup
+```bash
+# Start in background for long-running use
+docker compose --profile cpu up -d
+
+# Check status periodically
+docker compose ps
+
+# View logs when needed
+docker compose logs -f
+
+# Stop when done
+docker compose down
+```
+
+#### Troubleshooting
+```bash
+# View logs to diagnose issues
+docker compose logs -f
+
+# Restart problematic service
+docker compose restart [service-name]
+
+# Complete restart
+docker compose down && docker compose --profile cpu up -d
+```
 
 ## Upgrading
 
