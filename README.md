@@ -163,6 +163,64 @@ docker compose --profile cpu pull
 docker compose create && docker compose --profile cpu up
 ```
 
+## Cleanup
+
+To completely remove the Docker stack and all related resources:
+
+### For CPU setups:
+
+```bash
+# Remove containers, networks, and volumes
+docker compose --profile cpu down -v
+
+# Also remove all images (for complete cleanup)
+docker compose --profile cpu down -v --rmi all
+```
+
+### For Nvidia GPU setups:
+
+```bash
+# Remove containers, networks, and volumes
+docker compose --profile gpu-nvidia down -v
+
+# Also remove all images (for complete cleanup)
+docker compose --profile gpu-nvidia down -v --rmi all
+```
+
+### For AMD GPU setups:
+
+```bash
+# Remove containers, networks, and volumes
+docker compose --profile gpu-amd down -v
+
+# Also remove all images (for complete cleanup)
+docker compose --profile gpu-amd down -v --rmi all
+```
+
+### For Mac / Apple Silicon users:
+
+```bash
+# Remove containers, networks, and volumes
+docker compose down -v
+
+# Also remove all images (for complete cleanup)
+docker compose down -v --rmi all
+```
+
+### Additional cleanup (optional):
+
+```bash
+# Remove local n8n configuration data
+rm -rf ~/.n8n
+
+# Remove shared directory contents
+rm -rf ./shared/*
+```
+
+> [!NOTE]
+> The `-v` flag removes named volumes. The `--rmi all` flag removes all images used by services.
+> Use `--rmi local` to only remove images that don't have a custom tag.
+
 ## 👓 Recommended reading
 
 n8n is full of useful content for getting started quickly with its AI concepts
