@@ -11,13 +11,15 @@ quickly get started with building self-hosted AI workflows.
 > [!TIP]
 > [Read the announcement](https://blog.n8n.io/self-hosted-ai/)
 
-### What’s included
+### What's included
 
 ✅ [**Self-hosted n8n**](https://n8n.io/) - Low-code platform with over 400
 integrations and advanced AI components
 
 ✅ [**Ollama**](https://ollama.com/) - Cross-platform LLM platform to install
 and run the latest local LLMs
+
+✅ [**Open WebUI**](https://openwebui.com/) - User-friendly web interface for interacting with local LLMs
 
 ✅ [**Qdrant**](https://qdrant.tech/) - Open-source, high performance vector
 store with an comprehensive API
@@ -126,6 +128,8 @@ After completing the installation steps above, simply follow the steps below to 
 
 To open n8n at any time, visit <http://localhost:5678/> in your browser.
 
+You can also chat directly with your local AI models using **Open WebUI** at <http://localhost:3000/>. This provides a ChatGPT-like interface for your local LLMs, perfect for testing prompts and having conversations with your models.
+
 With your n8n instance, you'll have access to over 400 integrations and a
 suite of basic and advanced AI nodes such as
 [AI Agent](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/),
@@ -182,6 +186,9 @@ docker compose --profile gpu-amd up -d
 
 # For Mac / Apple Silicon users
 docker compose up -d
+
+# With Cloudflare Tunnels (add to any profile)
+docker compose --profile cpu --profile cloudflare up -d
 ```
 
 **Benefits of background mode:**
@@ -227,6 +234,8 @@ docker compose logs -f n8n
 docker compose logs -f ollama-cpu
 docker compose logs -f postgres
 docker compose logs -f qdrant
+docker compose logs -f open-webui
+docker compose logs -f cloudflared
 ```
 
 #### Monitor Resource Usage
@@ -418,7 +427,7 @@ your local n8n instance.
 The self-hosted AI starter kit will create a shared folder (by default,
 located in the same directory) which is mounted to the n8n container and
 allows n8n to access files on disk. This folder within the n8n container is
-located at `/data/shared` -- this is the path you’ll need to use in nodes that
+located at `/data/shared` -- this is the path you'll need to use in nodes that
 interact with the local filesystem.
 
 **Nodes that interact with the local filesystem**
@@ -426,6 +435,49 @@ interact with the local filesystem.
 - [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filesreadwrite/)
 - [Local File Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/)
 - [Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/)
+
+### Accessing Open WebUI via subdomain
+
+Open WebUI is accessible at `http://localhost:3000` by default. If you want to access it via your own subdomain (e.g., `ai.yourdomain.com`), you'll need to set up a reverse proxy on your server.
+
+**Example nginx configuration:**
+```nginx
+server {
+    listen 80;
+    server_name ai.yourdomain.com;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+The WebSocket connection upgrade headers are important for real-time features in Open WebUI.
+
+### Using Cloudflare Tunnels with Docker
+
+This starter kit includes an optional Cloudflare Tunnels service for secure external access without port forwarding.
+
+**Quick Start:**
+1. Set up a Cloudflare tunnel (see [docs/cloudflare-tunnels.md](docs/cloudflare-tunnels.md))
+2. Get your tunnel token: `cloudflared tunnel token your-tunnel-name`
+3. Add the token to your `.env` file: `TUNNEL_TOKEN=your-token-here`
+4. Start with Cloudflare profile: `docker compose --profile cloudflare up -d`
+
+**What you get:**
+- **Secure access** to all services via custom subdomains
+- **No port forwarding** required
+- **Automatic HTTPS** and DDoS protection
+- **Global CDN** performance
+
+See the comprehensive [Cloudflare Tunnels Guide](docs/cloudflare-tunnels.md) for detailed setup instructions.
 
 ## 📜 License
 
