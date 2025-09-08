@@ -41,8 +41,8 @@ Engineering world, handles large amounts of data safely.
 
 ### Local Development (Default)
 - **n8n Workflows**: <http://localhost:5678/>
-- **AI Chat Interface**: <http://localhost:3000/> 
-- **Vector Database**: <http://localhost:6333/dashboard>
+- **Open WebUI (AI Chat)**: <http://localhost:3000/> 
+- **Qdrant Vector Database**: <http://localhost:6333/dashboard>
 - **Ollama API**: <http://localhost:11434/>
 
 ### Global Access (Optional)
@@ -191,8 +191,8 @@ After completing the installation steps above, simply follow the steps below to 
 
 **Available Interfaces:**
 - **n8n Workflows**: <http://localhost:5678/> - Build AI automation workflows
-- **Open WebUI**: <http://localhost:3000/> - ChatGPT-like interface for your local LLMs
-- **Qdrant Dashboard**: <http://localhost:6333/dashboard> - Vector database management
+- **Open WebUI (AI Chat)**: <http://localhost:3000/> - ChatGPT-like interface for your local LLMs
+- **Qdrant Vector Database**: <http://localhost:6333/dashboard> - Vector database management
 - **Ollama API**: <http://localhost:11434/> - Direct API access for developers
 
 ### Global Access (Optional)
@@ -551,9 +551,9 @@ interact with the local filesystem.
 
 ### Accessing Open WebUI via subdomain
 
-Open WebUI is accessible at `http://localhost:3000` by default. If you want to access it via your own subdomain (e.g., `ai.yourdomain.com`), you'll need to set up a reverse proxy on your server.
+Open WebUI (AI Chat Interface) is accessible at `http://localhost:3000` by default. If you want to access it via your own subdomain (e.g., `ai.yourdomain.com`), you'll need to set up a reverse proxy on your server.
 
-**Example nginx configuration:**
+**Example nginx configuration for Open WebUI:**
 ```nginx
 server {
     listen 80;
