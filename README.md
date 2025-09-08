@@ -61,24 +61,64 @@ Example setup with custom domain:
 
 See [Complete Setup Guide](docs/SETUP-COMPLETE.md) for real-world implementation example.
 
+## 🔧 Prerequisites
+
+Before starting, ensure you have:
+
+### Required
+- **Docker & Docker Compose**: Latest stable versions
+  - [Install Docker Desktop](https://docs.docker.com/get-docker/) (Mac/Windows)
+  - [Install Docker Engine](https://docs.docker.com/engine/install/) (Linux)
+- **8GB+ RAM**: Recommended for local LLM inference
+- **10GB+ free disk space**: For Docker images and model storage
+
+### Optional (for Global Access)
+- **Domain name**: From any registrar (Porkbun, Namecheap, etc.)
+- **Cloudflare account**: Free tier is sufficient
+- **Email address**: For n8n admin account and Cloudflare Access
+
+### Hardware-Specific Requirements
+- **NVIDIA GPU**: Install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+- **AMD GPU (Linux only)**: ROCm drivers and Docker support
+- **Mac/Apple Silicon**: No additional requirements (CPU inference)
+
 ## Installation
 
 ### Cloning the Repository
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 ```
+
+### 🔧 Environment Configuration
+
+Edit the `.env` file to configure your setup:
+
+```bash
+# Required: Update n8n admin account details
+N8N_OWNER_EMAIL=your-email@example.com          # Your email for n8n admin account
+N8N_OWNER_PASSWORD=YourSecurePassword123!       # Secure password (8+ chars, 1 number, 1 capital)
+
+# Optional: For Mac users with local Ollama
+# OLLAMA_HOST=host.docker.internal:11434
+
+# Optional: For global access via Cloudflare Tunnels
+# TUNNEL_TOKEN=your-tunnel-token-here
+```
+
+> [!IMPORTANT]
+> **Required Setup**: You must update `N8N_OWNER_EMAIL` and `N8N_OWNER_PASSWORD` with your details. These create your admin account during first startup.
 
 ### Running n8n using Docker Compose
 
 #### For Nvidia GPU users
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 docker compose --profile gpu-nvidia up
 ```
 
@@ -89,9 +129,9 @@ docker compose --profile gpu-nvidia up
 ### For AMD GPU users on Linux
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 docker compose --profile gpu-amd up
 ```
 
@@ -110,9 +150,9 @@ If you want to run Ollama on your mac, check the
 for installation instructions, and run the starter kit as follows:
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 docker compose up
 ```
 
@@ -130,9 +170,9 @@ If you're running OLLAMA locally on your Mac (not in Docker), you need to modify
 #### For everyone else
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 docker compose --profile cpu up
 ```
 
@@ -463,6 +503,37 @@ This starter kit includes comprehensive documentation:
 - [**Cloudflare Tunnels Guide**](docs/cloudflare-tunnels.md) - Complete setup for global access
 - [**Setup Complete Guide**](docs/SETUP-COMPLETE.md) - Real-world implementation example
 - [**Quick Reference**](QUICK-REFERENCE.md) - Commands and troubleshooting for daily use
+
+### 🚨 Quick Troubleshooting
+
+**Services won't start:**
+```bash
+# Check service status
+docker compose ps
+
+# View logs for specific service
+docker compose logs -f [service-name]
+
+# Restart problematic service
+docker compose restart [service-name]
+```
+
+**n8n shows connection errors:**
+- Verify `.env` file has correct `N8N_OWNER_EMAIL` and `N8N_OWNER_PASSWORD`
+- Check if n8n container is running: `docker compose logs -f n8n`
+- Reset n8n data: `docker compose down -v` (⚠️ removes all workflows)
+
+**Open WebUI can't see models:**
+- Ensure Ollama is running: `docker compose logs -f ollama-cpu`
+- Check model download progress: Wait for first-time model download
+- Restart Open WebUI: `docker compose restart open-webui`
+
+**Cloudflare tunnels not working:**
+- Verify `TUNNEL_TOKEN` is set in `.env` file
+- Check tunnel status: `cloudflared tunnel info your-tunnel-name`
+- Ensure local services are running before starting tunnel
+
+For detailed troubleshooting, see [Complete Setup Guide](docs/SETUP-COMPLETE.md) and [Quick Reference](QUICK-REFERENCE.md).
 
 ### Accessing local files
 
