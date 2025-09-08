@@ -27,6 +27,8 @@ store with an comprehensive API
 ✅ [**PostgreSQL**](https://www.postgresql.org/) -  Workhorse of the Data
 Engineering world, handles large amounts of data safely.
 
+✅ [**Supabase**](https://supabase.com/) - Complete backend-as-a-service with authentication, real-time database, file storage, and admin dashboard (optional profile)
+
 ### What you can build
 
 ⭐️ **AI Agents** for scheduling appointments
@@ -44,6 +46,11 @@ Engineering world, handles large amounts of data safely.
 - **Open WebUI (AI Chat)**: <http://localhost:3000/> 
 - **Qdrant Vector Database**: <http://localhost:6333/dashboard>
 - **Ollama API**: <http://localhost:11434/>
+
+### Backend Services (Optional - Supabase Profile)
+- **Supabase Studio**: <http://localhost:3001> - Database admin & user management
+- **Supabase API**: <http://localhost:8000> - REST API & authentication
+- **Analytics Dashboard**: <http://localhost:4000> - Logs & real-time monitoring
 
 ### Global Access (Optional)
 Transform your local setup into a globally accessible AI platform with [Cloudflare Tunnels](docs/cloudflare-tunnels.md):
@@ -175,6 +182,33 @@ cd self-hosted-ai-starter-kit
 cp .env.example .env
 docker compose --profile cpu up
 ```
+
+#### Adding Supabase Backend (Optional)
+
+For a complete backend-as-a-service with authentication, real-time database, and file storage:
+
+```bash
+# Add Supabase configuration to your .env file
+SUPABASE_DB_PASSWORD=your-secure-db-password
+SUPABASE_JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
+SUPABASE_SECRET_KEY_BASE=your-secret-key-base-for-realtime
+SUPABASE_LOGFLARE_API_KEY=your-logflare-api-key
+
+# Start with Supabase profile (any hardware configuration)
+docker compose --profile cpu --profile supabase up
+docker compose --profile gpu-nvidia --profile supabase up  # For NVIDIA users
+docker compose --profile gpu-amd --profile supabase up     # For AMD users
+
+# Or all services including Cloudflare tunnels
+docker compose --profile cpu --profile supabase --profile cloudflare up
+```
+
+**Supabase Services:**
+- 🗄️ **Database Admin**: http://localhost:3001 - Visual database management
+- 🔐 **API & Auth**: http://localhost:8000 - REST API with authentication  
+- 📊 **Analytics**: http://localhost:4000 - Real-time logs and monitoring
+
+See the [Supabase Integration Guide](docs/supabase-integration.md) for detailed setup and usage.
 
 ## ⚡️ Quick start and usage
 
@@ -501,6 +535,7 @@ your local n8n instance.
 
 This starter kit includes comprehensive documentation:
 - [**Cloudflare Tunnels Guide**](docs/cloudflare-tunnels.md) - Complete setup for global access
+- [**Supabase Integration Guide**](docs/supabase-integration.md) - Backend-as-a-service setup with authentication
 - [**Setup Complete Guide**](docs/SETUP-COMPLETE.md) - Real-world implementation example
 - [**Quick Reference**](QUICK-REFERENCE.md) - Commands and troubleshooting for daily use
 

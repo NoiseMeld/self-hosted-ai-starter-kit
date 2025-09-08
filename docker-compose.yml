@@ -1,6 +1,8 @@
 volumes:
   n8n_storage:
   postgres_storage:
+  supabase_db_storage:
+  supabase_storage_storage:
   ollama_storage:
   qdrant_storage:
   open_webui_storage:
@@ -180,3 +182,271 @@ services:
       - n8n
       - qdrant
     profiles: ["cloudflare"]
+
+  # Supabase Services
+  supabase-db:
+    image: supabase/postgres:17.4.1.074
+    hostname: supabase-db
+    container_name: supabase-db
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_HOST=/var/run/postgresql
+      - PGPORT=5432
+      - POSTGRES_PORT=5432
+      - PGPASSWORD=${SUPABASE_DB_PASSWORD:-postgres}
+      - POSTGRES_PASSWORD=${SUPABASE_DB_PASSWORD:-postgres}
+      - PGDATABASE=postgres
+      - POSTGRES_DB=postgres
+      - PGUSER=supabase_admin
+      - POSTGRES_USER=supabase_admin
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256 --auth-local=scram-sha-256
+      - JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - JWT_EXP=${SUPABASE_JWT_EXPIRY:-3600}
+    volumes:
+      - supabase_db_storage:/var/lib/postgresql/data
+    command: >
+      postgres -c config_file=/etc/postgresql/postgresql.conf
+      -c log_min_messages=fatal
+    profiles: ["supabase"]
+
+  supabase-studio:
+    image: supabase/studio:20250913-08bee74
+    hostname: supabase-studio
+    container_name: supabase-studio
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - 3001:3000
+    environment:
+      - STUDIO_PG_META_URL=http://supabase-meta:8080
+      - POSTGRES_PASSWORD=${SUPABASE_DB_PASSWORD:-postgres}
+      - DEFAULT_ORGANIZATION_NAME=Default Organization
+      - DEFAULT_PROJECT_NAME=Default Project
+      - SUPABASE_URL=http://localhost:8000
+      - SUPABASE_REST_URL=http://localhost:8000/rest/v1/
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - LOGFLARE_API_KEY=${SUPABASE_LOGFLARE_API_KEY}
+      - LOGFLARE_URL=http://supabase-analytics:4000
+      - NEXT_PUBLIC_ENABLE_LOGS=true
+    profiles: ["supabase"]
+
+  supabase-kong:
+    image: kong:2.8.1
+    hostname: supabase-kong
+    container_name: supabase-kong
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+      - 8443:8443
+    environment:
+      - KONG_DATABASE=off
+      - KONG_DECLARATIVE_CONFIG=/var/lib/kong/kong.yml
+      - KONG_DNS_ORDER=LAST,A,CNAME
+      - KONG_PLUGINS=request-transformer,cors,key-auth,acl,basic-auth
+      - KONG_NGINX_PROXY_PROXY_BUFFER_SIZE=160k
+      - KONG_NGINX_PROXY_PROXY_BUFFERS=64 160k
+    volumes:
+      - ./supabase/config/kong.yml:/var/lib/kong/kong.yml:ro
+    depends_on:
+      - supabase-auth
+      - supabase-rest
+      - supabase-realtime
+      - supabase-storage
+      - supabase-meta
+    profiles: ["supabase"]
+
+  supabase-auth:
+    image: supabase/gotrue:v2.178.0
+    hostname: supabase-auth
+    container_name: supabase-auth
+    networks: ['demo']
+    restart: unless-stopped
+    environment:
+      - GOTRUE_API_HOST=0.0.0.0
+      - GOTRUE_API_PORT=9999
+      - API_EXTERNAL_URL=${SUPABASE_API_URL:-http://localhost:8000}
+      - GOTRUE_DB_DRIVER=postgres
+      - GOTRUE_DB_DATABASE_URL=postgresql://supabase_auth_admin:${SUPABASE_DB_PASSWORD:-postgres}@supabase-db:5432/postgres
+      - GOTRUE_SITE_URL=${SUPABASE_SITE_URL:-http://localhost:3000}
+      - GOTRUE_URI_ALLOW_LIST=${SUPABASE_AUTH_ALLOW_LIST}
+      - GOTRUE_DISABLE_SIGNUP=${SUPABASE_DISABLE_SIGNUP:-false}
+      - GOTRUE_JWT_ADMIN_ROLES=service_role
+      - GOTRUE_JWT_AUD=authenticated
+      - GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated
+      - GOTRUE_JWT_EXP=${SUPABASE_JWT_EXPIRY:-3600}
+      - GOTRUE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - GOTRUE_EXTERNAL_EMAIL_ENABLED=true
+      - GOTRUE_MAILER_AUTOCONFIRM=${SUPABASE_MAILER_AUTOCONFIRM:-false}
+      - GOTRUE_SMTP_ADMIN_EMAIL=${SUPABASE_SMTP_ADMIN_EMAIL:-admin@example.com}
+      - GOTRUE_SMTP_HOST=${SUPABASE_SMTP_HOST:-supabase-inbucket}
+      - GOTRUE_SMTP_PORT=${SUPABASE_SMTP_PORT:-2500}
+      - GOTRUE_SMTP_USER=${SUPABASE_SMTP_USER:-fake_mail_user}
+      - GOTRUE_SMTP_PASS=${SUPABASE_SMTP_PASS:-fake_mail_password}
+      - GOTRUE_SMTP_SENDER_NAME=${SUPABASE_SMTP_SENDER_NAME:-fake_sender}
+      - GOTRUE_MAILER_URLPATHS_INVITE=${SUPABASE_MAILER_URLPATHS_INVITE:-/auth/v1/verify}
+      - GOTRUE_MAILER_URLPATHS_CONFIRMATION=${SUPABASE_MAILER_URLPATHS_CONFIRMATION:-/auth/v1/verify}
+      - GOTRUE_MAILER_URLPATHS_RECOVERY=${SUPABASE_MAILER_URLPATHS_RECOVERY:-/auth/v1/verify}
+      - GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE=${SUPABASE_MAILER_URLPATHS_EMAIL_CHANGE:-/auth/v1/verify}
+    depends_on:
+      - supabase-db
+    profiles: ["supabase"]
+
+  supabase-rest:
+    image: postgrest/postgrest:v13.0.4
+    hostname: supabase-rest
+    container_name: supabase-rest
+    networks: ['demo']
+    restart: unless-stopped
+    environment:
+      - PGRST_DB_URI=postgresql://authenticator:${SUPABASE_DB_PASSWORD:-postgres}@supabase-db:5432/postgres
+      - PGRST_DB_SCHEMAS=${SUPABASE_DB_SCHEMAS:-public,storage,graphql_public}
+      - PGRST_DB_ANON_ROLE=anon
+      - PGRST_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - PGRST_DB_USE_LEGACY_GUCS=false
+      - PGRST_APP_SETTINGS_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - PGRST_APP_SETTINGS_JWT_EXP=${SUPABASE_JWT_EXPIRY:-3600}
+    depends_on:
+      - supabase-db
+    profiles: ["supabase"]
+
+  supabase-realtime:
+    image: supabase/realtime:v2.27.5
+    hostname: supabase-realtime
+    container_name: supabase-realtime
+    networks: ['demo']
+    restart: unless-stopped
+    environment:
+      - PORT=4000
+      - DB_HOST=supabase-db
+      - DB_PORT=5432
+      - DB_USER=supabase_admin
+      - DB_PASSWORD=${SUPABASE_DB_PASSWORD:-postgres}
+      - DB_NAME=postgres
+      - DB_AFTER_CONNECT_QUERY=SET search_path TO _realtime
+      - DB_ENC_KEY=supabaserealtime
+      - API_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - FLY_ALLOC_ID=fly123
+      - FLY_APP_NAME=realtime
+      - SECRET_KEY_BASE=${SUPABASE_SECRET_KEY_BASE}
+      - ERL_AFLAGS=-proto_dist inet_tcp
+      - ENABLE_TAILSCALE=false
+      - DNS_NODES='[\"127.0.0.1\"]'
+    depends_on:
+      - supabase-db
+    profiles: ["supabase"]
+
+  supabase-storage:
+    image: supabase/storage-api:v0.44.4
+    hostname: supabase-storage
+    container_name: supabase-storage
+    networks: ['demo']
+    restart: unless-stopped
+    environment:
+      - ANON_KEY=${SUPABASE_ANON_KEY}
+      - SERVICE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - POSTGREST_URL=http://supabase-rest:3000
+      - PGRST_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - DATABASE_URL=postgresql://supabase_storage_admin:${SUPABASE_DB_PASSWORD:-postgres}@supabase-db:5432/postgres
+      - FILE_SIZE_LIMIT=52428800
+      - STORAGE_BACKEND=file
+      - FILE_STORAGE_BACKEND_PATH=/var/lib/storage
+      - TENANT_ID=stub
+      - REGION=stub
+      - GLOBAL_S3_BUCKET=stub
+      - ENABLE_IMAGE_TRANSFORMATION=true
+      - IMGPROXY_URL=http://supabase-imgproxy:5001
+    volumes:
+      - supabase_storage_storage:/var/lib/storage
+    depends_on:
+      - supabase-db
+      - supabase-rest
+    profiles: ["supabase"]
+
+  supabase-imgproxy:
+    image: darthsim/imgproxy:v3.8.0
+    hostname: supabase-imgproxy
+    container_name: supabase-imgproxy
+    networks: ['demo']
+    restart: unless-stopped
+    environment:
+      - IMGPROXY_BIND=0.0.0.0:5001
+      - IMGPROXY_LOCAL_FILESYSTEM_ROOT=/
+      - IMGPROXY_USE_ETAG=true
+      - IMGPROXY_ENABLE_WEBP_DETECTION=true
+    profiles: ["supabase"]
+
+  supabase-meta:
+    image: supabase/postgres-meta:v0.91.5
+    hostname: supabase-meta
+    container_name: supabase-meta
+    networks: ['demo']
+    restart: unless-stopped
+    environment:
+      - PG_META_PORT=8080
+      - PG_META_DB_HOST=supabase-db
+      - PG_META_DB_PORT=5432
+      - PG_META_DB_NAME=postgres
+      - PG_META_DB_USER=supabase_admin
+      - PG_META_DB_PASSWORD=${SUPABASE_DB_PASSWORD:-postgres}
+    depends_on:
+      - supabase-db
+    profiles: ["supabase"]
+
+  supabase-functions:
+    image: supabase/edge-runtime:v1.32.3
+    hostname: supabase-functions
+    container_name: supabase-functions
+    networks: ['demo']
+    restart: unless-stopped
+    environment:
+      - JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_URL=http://supabase-kong:8000
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_DB_URL=postgresql://postgres:${SUPABASE_DB_PASSWORD:-postgres}@supabase-db:5432/postgres
+    volumes:
+      - ./supabase/functions:/home/deno/functions:Z
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    profiles: ["supabase"]
+
+  supabase-analytics:
+    image: supabase/logflare:1.18.4
+    hostname: supabase-analytics
+    container_name: supabase-analytics
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - 4000:4000
+    environment:
+      - LOGFLARE_NODE_HOST=127.0.0.1
+      - DB_USERNAME=supabase_admin
+      - DB_DATABASE=postgres
+      - DB_HOSTNAME=supabase-db
+      - DB_PORT=5432
+      - DB_PASSWORD=${SUPABASE_DB_PASSWORD:-postgres}
+      - DB_SCHEMA=_analytics
+      - LOGFLARE_API_KEY=${SUPABASE_LOGFLARE_API_KEY}
+      - LOGFLARE_SINGLE_TENANT=true
+      - LOGFLARE_SUPABASE_MODE=true
+      - LOGFLARE_MIN_CLUSTER_SIZE=1
+    depends_on:
+      - supabase-db
+    profiles: ["supabase"]
+
+  supabase-inbucket:
+    image: supabase/mailpit:v1.22.3
+    hostname: supabase-inbucket
+    container_name: supabase-inbucket
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - 54324:8025
+    environment:
+      - SMTP_SERVER=0.0.0.0:2500
+      - SMTP_RELAY_CONFIG_RETURN_PATH=noreply@mail.supabaselocal.com
+    profiles: ["supabase"]
