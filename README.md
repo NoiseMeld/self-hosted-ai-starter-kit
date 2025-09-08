@@ -1,6 +1,6 @@
 # Self-hosted AI starter kit
 
-**Self-hosted AI Starter Kit** is an open-source Docker Compose template designed to swiftly initialize a comprehensive local AI and low-code development environment.
+**Self-hosted AI Starter Kit** is an open-source Docker Compose template designed to swiftly initialize a comprehensive AI and low-code development environment that can run locally or be made globally accessible via secure Cloudflare Tunnels.
 
 ![n8n.io - Screenshot](https://raw.githubusercontent.com/n8n-io/self-hosted-ai-starter-kit/main/assets/n8n-demo.gif)
 
@@ -11,13 +11,15 @@ quickly get started with building self-hosted AI workflows.
 > [!TIP]
 > [Read the announcement](https://blog.n8n.io/self-hosted-ai/)
 
-### What’s included
+### What's included
 
 ✅ [**Self-hosted n8n**](https://n8n.io/) - Low-code platform with over 400
 integrations and advanced AI components
 
 ✅ [**Ollama**](https://ollama.com/) - Cross-platform LLM platform to install
 and run the latest local LLMs
+
+✅ [**Open WebUI**](https://openwebui.com/) - User-friendly web interface for interacting with local LLMs
 
 ✅ [**Qdrant**](https://qdrant.tech/) - Open-source, high performance vector
 store with an comprehensive API
@@ -35,24 +37,88 @@ Engineering world, handles large amounts of data safely.
 
 ⭐️ **Private Financial Document Analysis** at minimal cost
 
+## 🌐 Access Options
+
+### Local Development (Default)
+- **n8n Workflows**: <http://localhost:5678/>
+- **Open WebUI (AI Chat)**: <http://localhost:3000/> 
+- **Qdrant Vector Database**: <http://localhost:6333/dashboard>
+- **Ollama API**: <http://localhost:11434/>
+
+### Global Access (Optional)
+Transform your local setup into a globally accessible AI platform with [Cloudflare Tunnels](docs/cloudflare-tunnels.md):
+
+- **Professional URLs** with automatic HTTPS
+- **No port forwarding** or firewall changes needed  
+- **Enterprise security** with DDoS protection
+- **Authentication options** for sensitive services
+
+Example setup with custom domain:
+- 🤖 **AI Chat**: `https://ai.yourdomain.com`
+- ⚡ **Workflows**: `https://workflows.yourdomain.com` (with authentication)
+- 📊 **Vector DB**: `https://vectors.yourdomain.com/dashboard`
+- 🔧 **API**: `https://llm.yourdomain.com` (protected)
+
+See [Complete Setup Guide](docs/SETUP-COMPLETE.md) for real-world implementation example.
+
+## 🔧 Prerequisites
+
+Before starting, ensure you have:
+
+### Required
+- **Docker & Docker Compose**: Latest stable versions
+  - [Install Docker Desktop](https://docs.docker.com/get-docker/) (Mac/Windows)
+  - [Install Docker Engine](https://docs.docker.com/engine/install/) (Linux)
+- **8GB+ RAM**: Recommended for local LLM inference
+- **10GB+ free disk space**: For Docker images and model storage
+
+### Optional (for Global Access)
+- **Domain name**: From any registrar (Porkbun, Namecheap, etc.)
+- **Cloudflare account**: Free tier is sufficient
+- **Email address**: For n8n admin account and Cloudflare Access
+
+### Hardware-Specific Requirements
+- **NVIDIA GPU**: Install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+- **AMD GPU (Linux only)**: ROCm drivers and Docker support
+- **Mac/Apple Silicon**: No additional requirements (CPU inference)
+
 ## Installation
 
 ### Cloning the Repository
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 ```
+
+### 🔧 Environment Configuration
+
+Edit the `.env` file to configure your setup:
+
+```bash
+# Required: Update n8n admin account details
+N8N_OWNER_EMAIL=your-email@example.com          # Your email for n8n admin account
+N8N_OWNER_PASSWORD=YourSecurePassword123!       # Secure password (8+ chars, 1 number, 1 capital)
+
+# Optional: For Mac users with local Ollama
+# OLLAMA_HOST=host.docker.internal:11434
+
+# Optional: For global access via Cloudflare Tunnels
+# TUNNEL_TOKEN=your-tunnel-token-here
+```
+
+> [!IMPORTANT]
+> **Required Setup**: You must update `N8N_OWNER_EMAIL` and `N8N_OWNER_PASSWORD` with your details. These create your admin account during first startup.
 
 ### Running n8n using Docker Compose
 
 #### For Nvidia GPU users
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 docker compose --profile gpu-nvidia up
 ```
 
@@ -63,9 +129,9 @@ docker compose --profile gpu-nvidia up
 ### For AMD GPU users on Linux
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 docker compose --profile gpu-amd up
 ```
 
@@ -84,9 +150,9 @@ If you want to run Ollama on your mac, check the
 for installation instructions, and run the starter kit as follows:
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 docker compose up
 ```
 
@@ -104,27 +170,40 @@ If you're running OLLAMA locally on your Mac (not in Docker), you need to modify
 #### For everyone else
 
 ```bash
-git clone https://github.com/n8n-io/self-hosted-ai-starter-kit.git
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
 cd self-hosted-ai-starter-kit
-cp .env.example .env # you should update secrets and passwords inside
+cp .env.example .env
 docker compose --profile cpu up
 ```
 
 ## ⚡️ Quick start and usage
 
 The core of the Self-hosted AI Starter Kit is a Docker Compose file, pre-configured with network and storage settings, minimizing the need for additional installations.
+
+### Local Access (Default)
+
 After completing the installation steps above, simply follow the steps below to get started.
 
-1. Open <http://localhost:5678/> in your browser to set up n8n. You’ll only
-   have to do this once.
-2. Open the included workflow:
-   <http://localhost:5678/workflow/srOnR8PAY3u4RSwb>
-3. Click the **Chat** button at the bottom of the canvas, to start running the workflow.
-4. If this is the first time you’re running the workflow, you may need to wait
-   until Ollama finishes downloading Llama3.2. You can inspect the docker
-   console logs to check on the progress.
+1. **Set up n8n**: Open <http://localhost:5678/> in your browser to configure n8n. You'll create an owner account during first setup.
+2. **Try the demo workflow**: Open the included workflow at <http://localhost:5678/workflow/srOnR8PAY3u4RSwb>
+3. **Start chatting**: Click the **Chat** button at the bottom of the canvas to run the workflow.
+4. **Wait for models**: If this is the first time, wait for Ollama to download Llama3.2 (check docker logs for progress).
 
-To open n8n at any time, visit <http://localhost:5678/> in your browser.
+**Available Interfaces:**
+- **n8n Workflows**: <http://localhost:5678/> - Build AI automation workflows
+- **Open WebUI (AI Chat)**: <http://localhost:3000/> - ChatGPT-like interface for your local LLMs
+- **Qdrant Vector Database**: <http://localhost:6333/dashboard> - Vector database management
+- **Ollama API**: <http://localhost:11434/> - Direct API access for developers
+
+### Global Access (Optional)
+
+Transform your local setup into a professionally accessible AI platform:
+
+1. **Set up Cloudflare Tunnels** following our [step-by-step guide](docs/cloudflare-tunnels.md)
+2. **Configure authentication** for sensitive services like workflow management and API access
+3. **Access from anywhere** using your custom domain with enterprise-grade security
+
+Example result: Your personal AI platform accessible at `ai.yourdomain.com`, `workflows.yourdomain.com`, etc.
 
 With your n8n instance, you'll have access to over 400 integrations and a
 suite of basic and advanced AI nodes such as
@@ -182,6 +261,9 @@ docker compose --profile gpu-amd up -d
 
 # For Mac / Apple Silicon users
 docker compose up -d
+
+# With Cloudflare Tunnels (add to any profile)
+docker compose --profile cpu --profile cloudflare up -d
 ```
 
 **Benefits of background mode:**
@@ -227,6 +309,8 @@ docker compose logs -f n8n
 docker compose logs -f ollama-cpu
 docker compose logs -f postgres
 docker compose logs -f qdrant
+docker compose logs -f open-webui
+docker compose logs -f cloudflared
 ```
 
 #### Monitor Resource Usage
@@ -413,12 +497,50 @@ your local n8n instance.
 
 ## Tips & tricks
 
+### 📚 Additional Documentation
+
+This starter kit includes comprehensive documentation:
+- [**Cloudflare Tunnels Guide**](docs/cloudflare-tunnels.md) - Complete setup for global access
+- [**Setup Complete Guide**](docs/SETUP-COMPLETE.md) - Real-world implementation example
+- [**Quick Reference**](QUICK-REFERENCE.md) - Commands and troubleshooting for daily use
+
+### 🚨 Quick Troubleshooting
+
+**Services won't start:**
+```bash
+# Check service status
+docker compose ps
+
+# View logs for specific service
+docker compose logs -f [service-name]
+
+# Restart problematic service
+docker compose restart [service-name]
+```
+
+**n8n shows connection errors:**
+- Verify `.env` file has correct `N8N_OWNER_EMAIL` and `N8N_OWNER_PASSWORD`
+- Check if n8n container is running: `docker compose logs -f n8n`
+- Reset n8n data: `docker compose down -v` (⚠️ removes all workflows)
+
+**Open WebUI can't see models:**
+- Ensure Ollama is running: `docker compose logs -f ollama-cpu`
+- Check model download progress: Wait for first-time model download
+- Restart Open WebUI: `docker compose restart open-webui`
+
+**Cloudflare tunnels not working:**
+- Verify `TUNNEL_TOKEN` is set in `.env` file
+- Check tunnel status: `cloudflared tunnel info your-tunnel-name`
+- Ensure local services are running before starting tunnel
+
+For detailed troubleshooting, see [Complete Setup Guide](docs/SETUP-COMPLETE.md) and [Quick Reference](QUICK-REFERENCE.md).
+
 ### Accessing local files
 
 The self-hosted AI starter kit will create a shared folder (by default,
 located in the same directory) which is mounted to the n8n container and
 allows n8n to access files on disk. This folder within the n8n container is
-located at `/data/shared` -- this is the path you’ll need to use in nodes that
+located at `/data/shared` -- this is the path you'll need to use in nodes that
 interact with the local filesystem.
 
 **Nodes that interact with the local filesystem**
@@ -426,6 +548,64 @@ interact with the local filesystem.
 - [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filesreadwrite/)
 - [Local File Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/)
 - [Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/)
+
+### Accessing Open WebUI via subdomain
+
+Open WebUI (AI Chat Interface) is accessible at `http://localhost:3000` by default. If you want to access it via your own subdomain (e.g., `ai.yourdomain.com`), you'll need to set up a reverse proxy on your server.
+
+**Example nginx configuration for Open WebUI:**
+```nginx
+server {
+    listen 80;
+    server_name ai.yourdomain.com;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+The WebSocket connection upgrade headers are important for real-time features in Open WebUI.
+
+### 🌐 Global Access with Cloudflare Tunnels
+
+Transform your local AI development environment into a globally accessible, professionally hosted AI platform without complex networking or security setup.
+
+**Why Cloudflare Tunnels?**
+- ✅ **Zero Port Forwarding** - No firewall or router configuration needed
+- ✅ **Automatic HTTPS** - SSL certificates and security handled automatically  
+- ✅ **Enterprise Security** - DDoS protection and threat filtering included
+- ✅ **Global Performance** - CDN acceleration worldwide
+- ✅ **Professional URLs** - Custom domains like `ai.yourdomain.com`
+- ✅ **Authentication Options** - Protect sensitive services with email/SSO
+
+**Quick Setup:**
+1. **Follow our guide**: Complete step-by-step instructions in [docs/cloudflare-tunnels.md](docs/cloudflare-tunnels.md)
+2. **Get tunnel token**: `cloudflared tunnel token your-tunnel-name`
+3. **Add to environment**: Set `TUNNEL_TOKEN=your-token-here` in `.env`
+4. **Deploy globally**: `docker compose --profile cloudflare up -d`
+
+**Real-world Example:**
+See [Complete Setup Guide](docs/SETUP-COMPLETE.md) for a documented implementation showing how we deployed:
+- 🤖 **AI Chat**: https://ai.coachmeld.app (Public)
+- ⚡ **Workflows**: https://workflows.coachmeld.app (Authenticated)
+- 📊 **Vector DB**: https://vectors.coachmeld.app/dashboard (Public)
+- 🔧 **API Access**: https://llm.coachmeld.app (Protected)
+
+**Security Features:**
+- n8n workflow platform with user authentication
+- Ollama API protected with Cloudflare Access
+- Configurable access controls per service
+- Geographic restrictions and rate limiting options
+
+This transforms your local development setup into an enterprise-grade AI platform accessible from anywhere, while maintaining complete control over your data and models.
 
 ## 📜 License
 

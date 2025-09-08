@@ -3,6 +3,7 @@ volumes:
   postgres_storage:
   ollama_storage:
   qdrant_storage:
+  open_webui_storage:
 
 networks:
   demo:
@@ -151,3 +152,31 @@ services:
     image: ollama/ollama:rocm
     depends_on:
      - ollama-gpu-amd
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    hostname: open-webui
+    container_name: open-webui
+    networks: ['demo']
+    restart: unless-stopped
+    ports:
+      - 3000:8080
+    volumes:
+      - open_webui_storage:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    hostname: cloudflared
+    container_name: cloudflared
+    restart: unless-stopped
+    network_mode: "host"
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    environment:
+      - TUNNEL_TOKEN
+    depends_on:
+      - open-webui
+      - n8n
+      - qdrant
+    profiles: ["cloudflare"]
