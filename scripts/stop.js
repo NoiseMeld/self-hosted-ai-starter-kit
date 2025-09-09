@@ -63,7 +63,10 @@ async function stopAIStack(force = false) {
     }
     
     log(`Running: ${cmd.join(' ')}`, 'info');
-    await executeCommand(cmd[0], cmd.slice(1));
+    const result = await Bun.spawn(cmd, {
+      stdio: ['ignore', 'inherit', 'inherit']
+    });
+    await result.exited;
     
     log('AI Stack stopped successfully', 'success');
     return true;
@@ -90,7 +93,10 @@ async function stopSupabase() {
       return true;
     }
     
-    await executeCommand('npx', ['supabase', 'stop']);
+    const result = await Bun.spawn(['npx', 'supabase', 'stop'], {
+      stdio: ['ignore', 'inherit', 'inherit']
+    });
+    await result.exited;
     
     log('Supabase stopped successfully', 'success');
     return true;

@@ -94,7 +94,10 @@ async function startAIStack(profile = 'cpu', withCloudflare = false) {
     cmd.push('up', '-d');
     
     log(`Running: ${cmd.join(' ')}`, 'info');
-    await executeCommand(cmd[0], cmd.slice(1));
+    const result = await Bun.spawn(cmd, {
+      stdio: ['ignore', 'inherit', 'inherit']
+    });
+    await result.exited;
     
     log('AI Stack started successfully', 'success');
     
@@ -126,7 +129,10 @@ async function startSupabase() {
     }
     
     log('Initializing Supabase...', 'info');
-    await executeCommand('npx', ['supabase', 'start']);
+    const result = await Bun.spawn(['npx', 'supabase', 'start'], {
+      stdio: ['ignore', 'inherit', 'inherit']
+    });
+    await result.exited;
     
     log('Supabase started successfully', 'success');
     return true;
