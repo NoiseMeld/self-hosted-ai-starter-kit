@@ -8,7 +8,8 @@ import {
   log, 
   emojis, 
   executeCommand,
-  checkServicesStatus 
+  checkServicesStatus,
+  getDockerComposeCommand 
 } from "./utils.js";
 
 // Parse command line arguments
@@ -49,13 +50,75 @@ Examples:
 }
 
 /**
+ * Detect which Docker Compose profile is currently running
+ */
+async function detectActiveProfile() {
+  try {
+    // Check if GPU containers are running
+    const gpuResult = await Bun.spawn(['docker', 'ps', '--filter', 'name=ollama-gpu', '--format', '{{.Names}}'], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    
+    const gpuContainers = (await gpuResult.text()).trim();
+    if (gpuContainers) {
+      if (gpuContainers.includes('amd')) return 'gpu-amd';
+      return 'gpu-nvidia';
+    }
+    
+    // Default to CPU if no GPU containers found
+    return 'cpu';
+  } catch (error) {
+    log('Could not detect active profile, defaulting to CPU', 'warning');
+    return 'cpu';
+  }
+}
+
+/**
+ * Clean up standalone Ollama containers
+ */
+async function cleanupStandaloneOllama() {
+  try {
+    // Find standalone Ollama containers (not managed by compose)
+    const result = await Bun.spawn(['docker', 'ps', '-a', '--filter', 'ancestor=ollama/ollama', '--format', '{{.Names}}'], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    
+    const containerList = (await result.text()).trim();
+    if (containerList) {
+      const containers = containerList.split('\n').filter(name => 
+        name && !name.includes('self-hosted-ai-starter-kit')
+      );
+      
+      if (containers.length > 0) {
+        log(`Cleaning up standalone Ollama containers: ${containers.join(', ')}`, 'info');
+        
+        // Stop and remove the containers
+        await Bun.spawn(['docker', 'rm', '-f', ...containers], {
+          stdio: ['ignore', 'inherit', 'inherit']
+        });
+        
+        log('Standalone Ollama containers cleaned up', 'success');
+      }
+    }
+  } catch (error) {
+    log(`Note: Could not clean up standalone Ollama containers: ${error.message}`, 'warning');
+  }
+}
+
+/**
  * Stop AI stack
  */
 async function stopAIStack(force = false) {
   log('Stopping AI Stack...', 'header');
   
   try {
-    const cmd = ['docker', 'compose', 'down'];
+    // Detect which profile is currently running
+    const activeProfile = await detectActiveProfile();
+    log(`Detected active profile: ${activeProfile}`, 'info');
+    
+    // Use the same profile as the running containers
+    const cmd = getDockerComposeCommand(activeProfile, false);
+    cmd.push('down');
     
     if (force) {
       cmd.push('--volumes', '--remove-orphans');
