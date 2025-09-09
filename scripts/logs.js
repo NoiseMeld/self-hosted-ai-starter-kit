@@ -178,33 +178,15 @@ async function showCombinedLogs(options = {}) {
   console.log(`${colors.yellow}Note: Press Ctrl+C to stop following logs${colors.reset}`);
   console.log();
   
-  // Create array to hold promises
-  const logPromises = [];
-  
-  // AI Stack logs
+  // For combined logs, just use docker compose logs directly
   try {
     const aiCmd = await getAILogs(options);
-    logPromises.push(
-      spawn(aiCmd[0], aiCmd.slice(1), { stdio: ['ignore', 'pipe', 'pipe'] })
-    );
+    const result = await Bun.spawn(aiCmd, {
+      stdio: ['ignore', 'inherit', 'inherit']
+    });
+    await result.exited;
   } catch (error) {
     log(`Could not get AI stack logs: ${error.message}`, 'warning');
-  }
-  
-  // For combined logs, we'll primarily use docker compose logs
-  // as it handles multiple services better
-  if (logPromises.length > 0) {
-    const proc = logPromises[0];
-    
-    proc.stdout.on('data', (data) => {
-      process.stdout.write(data);
-    });
-    
-    proc.stderr.on('data', (data) => {
-      process.stderr.write(data);
-    });
-    
-    await proc.exited;
   }
 }
 
