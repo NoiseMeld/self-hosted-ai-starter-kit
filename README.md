@@ -27,6 +27,8 @@ store with an comprehensive API
 ✅ [**PostgreSQL**](https://www.postgresql.org/) -  Workhorse of the Data
 Engineering world, handles large amounts of data safely.
 
+✅ [**Supabase**](https://supabase.com/) - Complete backend-as-a-service with authentication, real-time database, file storage, and admin dashboard (optional profile)
+
 ### What you can build
 
 ⭐️ **AI Agents** for scheduling appointments
@@ -45,8 +47,13 @@ Engineering world, handles large amounts of data safely.
 - **Qdrant Vector Database**: <http://localhost:6333/dashboard>
 - **Ollama API**: <http://localhost:11434/>
 
+### Backend Services (Optional - Supabase Profile)
+- **Supabase Studio**: <http://localhost:3001> - Database admin & user management
+- **Supabase API**: <http://localhost:8000> - REST API & authentication
+- **Analytics Dashboard**: <http://localhost:4000> - Logs & real-time monitoring
+
 ### Global Access (Optional)
-Transform your local setup into a globally accessible AI platform with [Cloudflare Tunnels](docs/cloudflare-tunnels.md):
+Transform your local setup into a globally accessible AI platform with [Cloudflare Tunnels](docs/CLOUDFLARE-TUNNELS.md):
 
 - **Professional URLs** with automatic HTTPS
 - **No port forwarding** or firewall changes needed  
@@ -69,6 +76,8 @@ Before starting, ensure you have:
 - **Docker & Docker Compose**: Latest stable versions
   - [Install Docker Desktop](https://docs.docker.com/get-docker/) (Mac/Windows)
   - [Install Docker Engine](https://docs.docker.com/engine/install/) (Linux)
+- **Bun**: Modern JavaScript runtime for management commands
+  - [Install Bun](https://bun.sh/docs/installation) (curl -fsSL https://bun.sh/install | bash)
 - **8GB+ RAM**: Recommended for local LLM inference
 - **10GB+ free disk space**: For Docker images and model storage
 
@@ -111,9 +120,47 @@ N8N_OWNER_PASSWORD=YourSecurePassword123!       # Secure password (8+ chars, 1 n
 > [!IMPORTANT]
 > **Required Setup**: You must update `N8N_OWNER_EMAIL` and `N8N_OWNER_PASSWORD` with your details. These create your admin account during first startup.
 
-### Running n8n using Docker Compose
+### 🚀 Quick Start
 
-#### For Nvidia GPU users
+#### Option 1: Bun Management Commands (Recommended)
+
+```bash
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
+cd self-hosted-ai-starter-kit
+cp .env.example .env
+
+# Start everything (AI stack + Supabase)
+bun start
+
+# For GPU users
+bun start:gpu     # Auto-detect GPU
+bun start:nvidia  # NVIDIA GPU
+bun start:amd     # AMD GPU
+
+# Start individual stacks
+bun start:ai      # AI stack only  
+bun start:supabase # Supabase only
+
+# With global access
+bun start:cloudflare
+
+# View service status and URLs
+bun status
+bun urls
+
+# View logs
+bun logs         # All services
+bun logs:ai      # AI stack only
+bun logs n8n -f  # Follow specific service
+
+# Stop services
+bun stop         # Stop everything
+bun stop:ai      # Stop AI stack only
+```
+
+#### Option 2: Manual Docker Compose
+
+**For Nvidia GPU users:**
 
 ```bash
 git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
@@ -176,6 +223,33 @@ cp .env.example .env
 docker compose --profile cpu up
 ```
 
+#### Adding Supabase Backend (Optional)
+
+For a complete backend-as-a-service with authentication, real-time database, and file storage:
+
+```bash
+# Add Supabase configuration to your .env file
+SUPABASE_DB_PASSWORD=your-secure-db-password
+SUPABASE_JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
+SUPABASE_SECRET_KEY_BASE=your-secret-key-base-for-realtime
+SUPABASE_LOGFLARE_API_KEY=your-logflare-api-key
+
+# Start with Supabase profile (any hardware configuration)
+docker compose --profile cpu --profile supabase up
+docker compose --profile gpu-nvidia --profile supabase up  # For NVIDIA users
+docker compose --profile gpu-amd --profile supabase up     # For AMD users
+
+# Or all services including Cloudflare tunnels
+docker compose --profile cpu --profile supabase --profile cloudflare up
+```
+
+**Supabase Services:**
+- 🗄️ **Database Admin**: http://localhost:3001 - Visual database management
+- 🔐 **API & Auth**: http://localhost:8000 - REST API with authentication  
+- 📊 **Analytics**: http://localhost:4000 - Real-time logs and monitoring
+
+See the [Supabase Integration Guide](docs/SUPABASE-INTEGRATION.md) for detailed setup and usage.
+
 ## ⚡️ Quick start and usage
 
 The core of the Self-hosted AI Starter Kit is a Docker Compose file, pre-configured with network and storage settings, minimizing the need for additional installations.
@@ -195,11 +269,15 @@ After completing the installation steps above, simply follow the steps below to 
 - **Qdrant Vector Database**: <http://localhost:6333/dashboard> - Vector database management
 - **Ollama API**: <http://localhost:11434/> - Direct API access for developers
 
+**Backend Services (with bun start):**
+- **Supabase Studio**: <http://localhost:54323/> - Database admin & user management  
+- **Supabase API**: <http://localhost:54321/> - REST API & authentication
+
 ### Global Access (Optional)
 
 Transform your local setup into a professionally accessible AI platform:
 
-1. **Set up Cloudflare Tunnels** following our [step-by-step guide](docs/cloudflare-tunnels.md)
+1. **Set up Cloudflare Tunnels** following our [step-by-step guide](docs/CLOUDFLARE-TUNNELS.md)
 2. **Configure authentication** for sensitive services like workflow management and API access
 3. **Access from anywhere** using your custom domain with enterprise-grade security
 
@@ -495,12 +573,44 @@ your local n8n instance.
 - [Financial Documents Assistant using Qdrant and](https://n8n.io/workflows/2335-build-a-financial-documents-assistant-using-qdrant-and-mistralai/) [Mistral.ai](http://mistral.ai/)
 - [Recipe Recommendations with Qdrant and Mistral](https://n8n.io/workflows/2333-recipe-recommendations-with-qdrant-and-mistral/)
 
+## 🛑 Managing Services
+
+**Start everything:**
+```bash
+bun start                # Start everything (CPU profile)
+bun start:gpu           # Auto-detect GPU
+bun start:nvidia        # NVIDIA GPU profile
+```
+
+**Stop everything:**
+```bash
+bun stop                # Stops both AI stack and Supabase
+```
+
+**Individual control:**
+```bash
+# AI stack only
+bun start:ai            # Start
+bun stop:ai             # Stop
+
+# Supabase only  
+bun start:supabase      # Start
+bun stop:supabase       # Stop
+
+# Status and monitoring
+bun status              # View service status
+bun urls                # Show service URLs
+bun logs:ai             # View AI stack logs
+bun logs:supabase       # View Supabase logs
+```
+
 ## Tips & tricks
 
 ### 📚 Additional Documentation
 
 This starter kit includes comprehensive documentation:
-- [**Cloudflare Tunnels Guide**](docs/cloudflare-tunnels.md) - Complete setup for global access
+- [**Cloudflare Tunnels Guide**](docs/CLOUDFLARE-TUNNELS.md) - Complete setup for global access
+- [**Supabase Integration Guide**](docs/SUPABASE-INTEGRATION.md) - Backend-as-a-service setup with authentication
 - [**Setup Complete Guide**](docs/SETUP-COMPLETE.md) - Real-world implementation example
 - [**Quick Reference**](QUICK-REFERENCE.md) - Commands and troubleshooting for daily use
 
@@ -587,7 +697,7 @@ Transform your local AI development environment into a globally accessible, prof
 - ✅ **Authentication Options** - Protect sensitive services with email/SSO
 
 **Quick Setup:**
-1. **Follow our guide**: Complete step-by-step instructions in [docs/cloudflare-tunnels.md](docs/cloudflare-tunnels.md)
+1. **Follow our guide**: Complete step-by-step instructions in [docs/CLOUDFLARE-TUNNELS.md](docs/CLOUDFLARE-TUNNELS.md)
 2. **Get tunnel token**: `cloudflared tunnel token your-tunnel-name`
 3. **Add to environment**: Set `TUNNEL_TOKEN=your-token-here` in `.env`
 4. **Deploy globally**: `docker compose --profile cloudflare up -d`

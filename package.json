@@ -1,0 +1,38 @@
+{
+  "name": "self-hosted-ai-starter-kit",
+  "version": "1.0.0",
+  "description": "Self-hosted AI development environment with n8n, Ollama, Qdrant, and Supabase",
+  "type": "module",
+  "scripts": {
+    "start": "bun scripts/start.js all",
+    "stop": "bun scripts/stop.js all",
+    "status": "bun scripts/status.js",
+    "start:ai": "bun scripts/start.js ai",
+    "start:supabase": "bun scripts/start.js supabase",
+    "stop:ai": "bun scripts/stop.js ai",
+    "stop:supabase": "bun scripts/stop.js supabase",
+    "start:gpu": "bun scripts/start.js ai --profile=auto-gpu",
+    "start:nvidia": "bun scripts/start.js ai --profile=gpu-nvidia",
+    "start:amd": "bun scripts/start.js ai --profile=gpu-amd",
+    "start:cloudflare": "bun scripts/start.js all --cloudflare",
+    "logs": "bun scripts/logs.js",
+    "logs:ai": "bun scripts/logs.js ai",
+    "logs:supabase": "bun scripts/logs.js supabase",
+    "urls": "bun scripts/urls.js"
+  },
+  "keywords": [
+    "ai",
+    "n8n",
+    "ollama",
+    "supabase",
+    "qdrant",
+    "docker",
+    "self-hosted"
+  ],
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}
