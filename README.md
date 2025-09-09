@@ -53,7 +53,7 @@ Engineering world, handles large amounts of data safely.
 - **Analytics Dashboard**: <http://localhost:4000> - Logs & real-time monitoring
 
 ### Global Access (Optional)
-Transform your local setup into a globally accessible AI platform with [Cloudflare Tunnels](docs/cloudflare-tunnels.md):
+Transform your local setup into a globally accessible AI platform with [Cloudflare Tunnels](docs/CLOUDFLARE-TUNNELS.md):
 
 - **Professional URLs** with automatic HTTPS
 - **No port forwarding** or firewall changes needed  
@@ -76,6 +76,8 @@ Before starting, ensure you have:
 - **Docker & Docker Compose**: Latest stable versions
   - [Install Docker Desktop](https://docs.docker.com/get-docker/) (Mac/Windows)
   - [Install Docker Engine](https://docs.docker.com/engine/install/) (Linux)
+- **Bun**: Modern JavaScript runtime for management commands
+  - [Install Bun](https://bun.sh/docs/installation) (curl -fsSL https://bun.sh/install | bash)
 - **8GB+ RAM**: Recommended for local LLM inference
 - **10GB+ free disk space**: For Docker images and model storage
 
@@ -118,9 +120,47 @@ N8N_OWNER_PASSWORD=YourSecurePassword123!       # Secure password (8+ chars, 1 n
 > [!IMPORTANT]
 > **Required Setup**: You must update `N8N_OWNER_EMAIL` and `N8N_OWNER_PASSWORD` with your details. These create your admin account during first startup.
 
-### Running n8n using Docker Compose
+### 🚀 Quick Start
 
-#### For Nvidia GPU users
+#### Option 1: Bun Management Commands (Recommended)
+
+```bash
+git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
+cd self-hosted-ai-starter-kit
+cp .env.example .env
+
+# Start everything (AI stack + Supabase)
+bun start
+
+# For GPU users
+bun start:gpu     # Auto-detect GPU
+bun start:nvidia  # NVIDIA GPU
+bun start:amd     # AMD GPU
+
+# Start individual stacks
+bun start:ai      # AI stack only  
+bun start:supabase # Supabase only
+
+# With global access
+bun start:cloudflare
+
+# View service status and URLs
+bun status
+bun urls
+
+# View logs
+bun logs         # All services
+bun logs:ai      # AI stack only
+bun logs n8n -f  # Follow specific service
+
+# Stop services
+bun stop         # Stop everything
+bun stop:ai      # Stop AI stack only
+```
+
+#### Option 2: Manual Docker Compose
+
+**For Nvidia GPU users:**
 
 ```bash
 git clone https://github.com/NoiseMeld/self-hosted-ai-starter-kit.git
@@ -208,7 +248,7 @@ docker compose --profile cpu --profile supabase --profile cloudflare up
 - 🔐 **API & Auth**: http://localhost:8000 - REST API with authentication  
 - 📊 **Analytics**: http://localhost:4000 - Real-time logs and monitoring
 
-See the [Supabase Integration Guide](docs/supabase-integration.md) for detailed setup and usage.
+See the [Supabase Integration Guide](docs/SUPABASE-INTEGRATION.md) for detailed setup and usage.
 
 ## ⚡️ Quick start and usage
 
@@ -229,11 +269,15 @@ After completing the installation steps above, simply follow the steps below to 
 - **Qdrant Vector Database**: <http://localhost:6333/dashboard> - Vector database management
 - **Ollama API**: <http://localhost:11434/> - Direct API access for developers
 
+**Backend Services (with bun start):**
+- **Supabase Studio**: <http://localhost:54323/> - Database admin & user management  
+- **Supabase API**: <http://localhost:54321/> - REST API & authentication
+
 ### Global Access (Optional)
 
 Transform your local setup into a professionally accessible AI platform:
 
-1. **Set up Cloudflare Tunnels** following our [step-by-step guide](docs/cloudflare-tunnels.md)
+1. **Set up Cloudflare Tunnels** following our [step-by-step guide](docs/CLOUDFLARE-TUNNELS.md)
 2. **Configure authentication** for sensitive services like workflow management and API access
 3. **Access from anywhere** using your custom domain with enterprise-grade security
 
@@ -529,13 +573,44 @@ your local n8n instance.
 - [Financial Documents Assistant using Qdrant and](https://n8n.io/workflows/2335-build-a-financial-documents-assistant-using-qdrant-and-mistralai/) [Mistral.ai](http://mistral.ai/)
 - [Recipe Recommendations with Qdrant and Mistral](https://n8n.io/workflows/2333-recipe-recommendations-with-qdrant-and-mistral/)
 
+## 🛑 Managing Services
+
+**Start everything:**
+```bash
+bun start                # Start everything (CPU profile)
+bun start:gpu           # Auto-detect GPU
+bun start:nvidia        # NVIDIA GPU profile
+```
+
+**Stop everything:**
+```bash
+bun stop                # Stops both AI stack and Supabase
+```
+
+**Individual control:**
+```bash
+# AI stack only
+bun start:ai            # Start
+bun stop:ai             # Stop
+
+# Supabase only  
+bun start:supabase      # Start
+bun stop:supabase       # Stop
+
+# Status and monitoring
+bun status              # View service status
+bun urls                # Show service URLs
+bun logs:ai             # View AI stack logs
+bun logs:supabase       # View Supabase logs
+```
+
 ## Tips & tricks
 
 ### 📚 Additional Documentation
 
 This starter kit includes comprehensive documentation:
-- [**Cloudflare Tunnels Guide**](docs/cloudflare-tunnels.md) - Complete setup for global access
-- [**Supabase Integration Guide**](docs/supabase-integration.md) - Backend-as-a-service setup with authentication
+- [**Cloudflare Tunnels Guide**](docs/CLOUDFLARE-TUNNELS.md) - Complete setup for global access
+- [**Supabase Integration Guide**](docs/SUPABASE-INTEGRATION.md) - Backend-as-a-service setup with authentication
 - [**Setup Complete Guide**](docs/SETUP-COMPLETE.md) - Real-world implementation example
 - [**Quick Reference**](QUICK-REFERENCE.md) - Commands and troubleshooting for daily use
 
@@ -622,7 +697,7 @@ Transform your local AI development environment into a globally accessible, prof
 - ✅ **Authentication Options** - Protect sensitive services with email/SSO
 
 **Quick Setup:**
-1. **Follow our guide**: Complete step-by-step instructions in [docs/cloudflare-tunnels.md](docs/cloudflare-tunnels.md)
+1. **Follow our guide**: Complete step-by-step instructions in [docs/CLOUDFLARE-TUNNELS.md](docs/CLOUDFLARE-TUNNELS.md)
 2. **Get tunnel token**: `cloudflared tunnel token your-tunnel-name`
 3. **Add to environment**: Set `TUNNEL_TOKEN=your-token-here` in `.env`
 4. **Deploy globally**: `docker compose --profile cloudflare up -d`
